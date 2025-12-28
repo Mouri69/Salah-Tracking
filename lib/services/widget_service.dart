@@ -56,10 +56,22 @@ class WidgetService {
       }
     }
 
-    // Update the widget
-    await HomeWidget.updateWidget(
-      androidName: _androidProviderName,
-    );
+    // Update the widget - force update
+    try {
+      await HomeWidget.updateWidget(
+        androidName: _androidProviderName,
+      );
+      // Also try to force update all widgets
+      await HomeWidget.updateWidget(
+        androidName: _androidProviderName,
+        qualifiedAndroidName: 'com.example.salah_tracking.PrayerWidgetProvider',
+      );
+    } catch (e) {
+      // If qualified name fails, that's okay
+      await HomeWidget.updateWidget(
+        androidName: _androidProviderName,
+      );
+    }
   }
 
 

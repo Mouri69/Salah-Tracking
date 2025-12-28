@@ -50,7 +50,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationAccessRequired => 'Location access required';
 
   @override
-  String get enableLocationServices => 'Please enable location services to get prayer times';
+  String get enableLocationServices =>
+      'Please enable location services to get prayer times';
 
   @override
   String get retry => 'Retry';

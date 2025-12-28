@@ -85,20 +85,117 @@ class _PreviousPrayersPageState extends State<PreviousPrayersPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return Column(
-            children: [
-              // Counter Section
-              _buildCounterSection(context, provider),
+          DailyPrayers? selectedPrayers;
+          try {
+            selectedPrayers = provider.allPrayers.firstWhere(
+              (p) => isSameDay(p.date, _selectedDay),
+            );
+          } catch (e) {
+            selectedPrayers = null;
+          }
+
+          if (selectedPrayers == null) {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildCounterSection(context, provider),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildViewModeSelector(),
+                ),
+                SliverAppBar(
+                  pinned: true,
+                  floating: false,
+                  snap: false,
+                  expandedHeight: 0,
+                  toolbarHeight: 0,
+                  elevation: 4,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  flexibleSpace: _buildCalendar(provider),
+                ),
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No prayers recorded for ${DateFormat('MMM d, y').format(_selectedDay)}',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          final selectedPrayersNotNull = selectedPrayers;
+          
+          return CustomScrollView(
+            slivers: [
+              // Counter Section - Sticky at top
+              SliverToBoxAdapter(
+                child: _buildCounterSection(context, provider),
+              ),
               
-              // View Mode Selector
-              _buildViewModeSelector(),
+              // View Mode Selector - Sticky
+              SliverToBoxAdapter(
+                child: _buildViewModeSelector(),
+              ),
               
-              // Calendar
-              _buildCalendar(provider),
+              // Calendar - Pinned at top, scrolls away when scrolling down
+              SliverAppBar(
+                pinned: true,
+                floating: false,
+                snap: false,
+                expandedHeight: 0,
+                toolbarHeight: 0,
+                elevation: 4,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                flexibleSpace: _buildCalendar(provider),
+              ),
               
-              // Prayer List
-              Expanded(
-                child: _buildPrayerList(context, provider),
+              // Prayer List - Scrollable
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          DateFormat('EEEE, MMMM d, y').format(selectedPrayersNotNull.date),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      );
+                    }
+                    
+                    final prayerIndex = index - 1;
+                    if (prayerIndex < selectedPrayersNotNull.prayers.length) {
+                      final prayer = selectedPrayersNotNull.prayers[prayerIndex];
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: PrayerWidget(
+                          prayer: prayer,
+                          onTap: () {
+                            provider.updatePrayerStatus(
+                              selectedPrayersNotNull.date,
+                              prayerIndex,
+                            );
+                          },
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                  childCount: selectedPrayersNotNull.prayers.length + 1,
+                ),
               ),
             ],
           );
@@ -239,66 +336,5 @@ class _PreviousPrayersPageState extends State<PreviousPrayersPage> {
     );
   }
 
-  Widget _buildPrayerList(BuildContext context, PrayerProvider provider) {
-    DailyPrayers? selectedPrayers;
-
-    // Find prayers for selected day
-    try {
-      selectedPrayers = provider.allPrayers.firstWhere(
-        (p) => isSameDay(p.date, _selectedDay),
-      );
-    } catch (e) {
-      // No prayers found for this day
-    }
-
-    if (selectedPrayers == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.calendar_today,
-              size: 64,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No prayers recorded for ${DateFormat('MMM d, y').format(_selectedDay)}',
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          DateFormat('EEEE, MMMM d, y').format(selectedPrayers.date),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 16),
-        ...selectedPrayers.prayers.asMap().entries.map((entry) {
-          final index = entry.key;
-          final prayer = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: PrayerWidget(
-              prayer: prayer,
-              onTap: () {
-                if (selectedPrayers != null) {
-                  provider.updatePrayerStatus(
-                    selectedPrayers.date,
-                    index,
-                  );
-                }
-              },
-            ),
-          );
-        }).toList(),
-      ],
-    );
-  }
 }
 

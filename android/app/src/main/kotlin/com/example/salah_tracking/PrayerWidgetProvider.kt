@@ -47,52 +47,69 @@ class PrayerWidgetProvider : AppWidgetProvider() {
     
     private fun updatePrayerStatus(context: Context, prayerIndex: Int) {
         try {
+            android.util.Log.d("PrayerWidget", "updatePrayerStatus called for prayer $prayerIndex")
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-            val currentStatus = prefs.getString("flutter.prayer_${prayerIndex}_status", "notPrayed") ?: "notPrayed"
-        
-        // Cycle through statuses: notPrayed -> prayedOnTime -> prayedLate -> notPrayed
-        val newStatus = when (currentStatus) {
-            "notPrayed" -> "prayedOnTime"
-            "prayedOnTime" -> "prayedLate"
-            "prayedLate" -> "notPrayed"
-            else -> "notPrayed"
-        }
-        
-        // Save new status
-        val editor = prefs.edit()
-        editor.putString("flutter.prayer_${prayerIndex}_status", newStatus)
-        
-        // Update performed time if prayed
-        if (newStatus != "notPrayed") {
-            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
-            val currentTime = timeFormat.format(java.util.Date())
-            editor.putString("flutter.prayer_${prayerIndex}_performed", currentTime)
-        } else {
-            editor.putString("flutter.prayer_${prayerIndex}_performed", "")
-        }
-        
-        // Update counter
-        var completed = 0
-        for (i in 0..4) {
-            val status = prefs.getString("flutter.prayer_${i}_status", "notPrayed") ?: "notPrayed"
-            if (i == prayerIndex) {
-                if (newStatus != "notPrayed") completed++
+            
+            // Try to read current status - home_widget stores as "flutter.keyName"
+            var currentStatus = prefs.getString("flutter.prayer_${prayerIndex}_status", null)
+            if (currentStatus == null) {
+                // Try without flutter prefix (fallback)
+                currentStatus = prefs.getString("prayer_${prayerIndex}_status", "notPrayed") ?: "notPrayed"
             } else {
-                if (status != "notPrayed") completed++
+                currentStatus = currentStatus ?: "notPrayed"
             }
-        }
-        editor.putString("flutter.completed", completed.toString())
-        editor.apply()
+            
+            android.util.Log.d("PrayerWidget", "Current status for prayer $prayerIndex: $currentStatus")
         
-        // Update widget immediately - force refresh with new colors
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        val appWidgetIds = appWidgetManager.getAppWidgetIds(
-            android.content.ComponentName(context, PrayerWidgetProvider::class.java)
-        )
-        // Call updateAppWidget directly for each widget to ensure colors update
-        for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
-        }
+            // Cycle through statuses: notPrayed -> prayedOnTime -> prayedLate -> notPrayed
+            val newStatus = when (currentStatus) {
+                "notPrayed" -> "prayedOnTime"
+                "prayedOnTime" -> "prayedLate"
+                "prayedLate" -> "notPrayed"
+                else -> "notPrayed"
+            }
+            android.util.Log.d("PrayerWidget", "New status for prayer $prayerIndex: $newStatus")
+        
+            // Save new status - use flutter. prefix for home_widget compatibility
+            val editor = prefs.edit()
+            editor.putString("flutter.prayer_${prayerIndex}_status", newStatus)
+        
+            // Update performed time if prayed
+            if (newStatus != "notPrayed") {
+                val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+                val currentTime = timeFormat.format(java.util.Date())
+                editor.putString("flutter.prayer_${prayerIndex}_performed", currentTime)
+            } else {
+                editor.putString("flutter.prayer_${prayerIndex}_performed", "")
+            }
+        
+            // Update counter
+            var completed = 0
+            for (i in 0..4) {
+                var status = prefs.getString("flutter.prayer_${i}_status", null)
+                if (status == null) {
+                    status = prefs.getString("prayer_${i}_status", "notPrayed") ?: "notPrayed"
+                }
+                if (i == prayerIndex) {
+                    if (newStatus != "notPrayed") completed++
+                } else {
+                    if (status != "notPrayed") completed++
+                }
+            }
+            editor.putString("flutter.completed", completed.toString())
+            editor.apply()
+            android.util.Log.d("PrayerWidget", "Saved new status and counter: $completed/5")
+        
+            // Update widget immediately - force refresh with new colors
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            val appWidgetIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(context, PrayerWidgetProvider::class.java)
+            )
+            android.util.Log.d("PrayerWidget", "Updating ${appWidgetIds.size} widget(s)")
+            // Call updateAppWidget directly for each widget to ensure colors update
+            for (appWidgetId in appWidgetIds) {
+                updateAppWidget(context, appWidgetManager, appWidgetId)
+            }
         } catch (e: Exception) {
             android.util.Log.e("PrayerWidget", "Error updating prayer status: ${e.message}", e)
         }
@@ -107,12 +124,28 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             // home_widget stores data in FlutterSharedPreferences with specific key format
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             
+            // Debug: Log all keys to see what's stored
+            val allKeys = prefs.all.keys
+            android.util.Log.d("PrayerWidget", "All SharedPreferences keys: ${allKeys.joinToString()}")
+            
             val views = RemoteViews(context.packageName, R.layout.prayer_widget)
             
             // Get theme and language - home_widget stores as "flutter.keyName" in SharedPreferences
-            // The home_widget package stores data with "flutter." prefix
-            val isDarkThemeStr = prefs.getString("flutter.is_dark_theme", "false") ?: "false"
-            val isDarkTheme = isDarkThemeStr == "true"
+            // Note: StorageService saves is_dark_theme as Boolean, but WidgetService saves it as String
+            // Try to read as Boolean first (from StorageService), then as String (from WidgetService)
+            val isDarkTheme: Boolean = try {
+                // First try to read as Boolean (from StorageService)
+                prefs.getBoolean("flutter.is_dark_theme", false)
+            } catch (e: Exception) {
+                // If that fails, try as String (from WidgetService)
+                try {
+                    val isDarkThemeStr = prefs.getString("flutter.is_dark_theme", "false") ?: "false"
+                    isDarkThemeStr == "true"
+                } catch (e2: Exception) {
+                    false
+                }
+            }
+            
             val languageCode = prefs.getString("flutter.language_code", "en") ?: "en"
             
             android.util.Log.d("PrayerWidget", "Theme: $isDarkTheme, Language: $languageCode")
@@ -162,9 +195,19 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                     views.setTextColor(nameId, textColor)
                 }
                 if (timeId != 0) {
-                    views.setTextViewText(timeId, time)
+                    // Make sure time is displayed
+                    if (time.isNotEmpty()) {
+                        views.setTextViewText(timeId, time)
+                        android.util.Log.d("PrayerWidget", "Set time for prayer $i: $time")
+                    } else {
+                        // If time is empty, try to get default time or show placeholder
+                        views.setTextViewText(timeId, "--:--")
+                        android.util.Log.w("PrayerWidget", "Time is empty for prayer $i")
+                    }
                     val timeColor = if (isDarkTheme) 0xFFB0B0B0.toInt() else 0xFF666666.toInt()
                     views.setTextColor(timeId, timeColor)
+                } else {
+                    android.util.Log.w("PrayerWidget", "Time ID is 0 for prayer $i")
                 }
                 
                 if (statusId != 0) {

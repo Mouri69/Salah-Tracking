@@ -62,6 +62,11 @@ class PrayerProvider with ChangeNotifier {
       
       // Load all prayers
       await loadAllPrayers();
+      
+      // Update widget after initialization
+      if (_todayPrayers != null) {
+        await WidgetService.updateWidget(_todayPrayers);
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -103,7 +108,7 @@ class PrayerProvider with ChangeNotifier {
       await _storageService.saveDailyPrayers(_todayPrayers!);
     }
 
-    // Update widget
+    // Always update widget after loading prayers
     await WidgetService.updateWidget(_todayPrayers);
 
     notifyListeners();
@@ -158,6 +163,11 @@ class PrayerProvider with ChangeNotifier {
 
     await loadAllPrayers();
     notifyListeners();
+  }
+
+  // Call this method to force sync from widget (can be called from anywhere)
+  Future<void> forceSyncFromWidget() async {
+    await syncFromWidget();
   }
 
   Map<String, int> getPrayerStats(DateTime startDate, DateTime endDate) {

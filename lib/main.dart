@@ -50,16 +50,7 @@ class _MyAppState extends State<MyApp> {
       _isDarkTheme = !_isDarkTheme;
     });
     await _storageService.saveTheme(_isDarkTheme);
-    // Update widget with new theme immediately
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = Provider.of<PrayerProvider>(context, listen: false);
-      if (provider.todayPrayers != null) {
-        // Force widget update with new theme
-        await WidgetService.updateWidget(provider.todayPrayers);
-      } else {
-        await provider.loadTodayPrayers();
-      }
-    });
+    // Widget will be updated when provider loads today's prayers
   }
 
   void _changeLanguage(Locale locale) async {
@@ -67,40 +58,64 @@ class _MyAppState extends State<MyApp> {
       _locale = locale;
     });
     await _storageService.saveLanguage(locale.languageCode);
-    // Update widget with new language immediately
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = Provider.of<PrayerProvider>(context, listen: false);
-      await provider.loadTodayPrayers();
-    });
+    // Widget will be updated when provider loads today's prayers
   }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => PrayerProvider()..initialize(),
-      child: MaterialApp(
-        title: 'Salah Tracking',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: _isDarkTheme ? ThemeMode.dark : ThemeMode.light,
-        locale: _locale,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en'),
-          Locale('ar'),
-        ],
-        home: MainScreen(
-          isDarkTheme: _isDarkTheme,
-          currentLocale: _locale,
-          onThemeToggle: _toggleTheme,
-          onLanguageChange: _changeLanguage,
-        ),
+      child: Builder(
+        builder: (context) {
+          // Access provider from this context after it's created
+          final provider = Provider.of<PrayerProvider>(context, listen: false);
+          
+          // Update widget when theme or language changes
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (provider.todayPrayers != null) {
+              await WidgetService.updateWidget(provider.todayPrayers);
+            }
+          });
+          
+          return MaterialApp(
+            title: 'Salah Tracking',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: _isDarkTheme ? ThemeMode.dark : ThemeMode.light,
+            locale: _locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('ar'),
+            ],
+            home: MainScreen(
+              isDarkTheme: _isDarkTheme,
+              currentLocale: _locale,
+              onThemeToggle: () {
+                _toggleTheme();
+                // Update widget after theme change
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  if (provider.todayPrayers != null) {
+                    await WidgetService.updateWidget(provider.todayPrayers);
+                  }
+                });
+              },
+              onLanguageChange: (locale) {
+                _changeLanguage(locale);
+                // Update widget after language change
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  await provider.loadTodayPrayers();
+                });
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -143,8 +158,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Sync widget changes when app resumes
-      final provider = Provider.of<PrayerProvider>(context, listen: false);
-      provider.syncFromWidget();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final provider = Provider.of<PrayerProvider>(context, listen: false);
+        await provider.syncFromWidget();
+      });
     }
   }
 
