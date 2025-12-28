@@ -6,8 +6,15 @@ import '../widgets/prayer_grid_widget.dart';
 
 class TodayPrayersPage extends StatelessWidget {
   final VoidCallback? onThemeToggle;
+  final Function(Locale)? onLanguageChange;
+  final Locale? currentLocale;
   
-  const TodayPrayersPage({super.key, this.onThemeToggle});
+  const TodayPrayersPage({
+    super.key,
+    this.onThemeToggle,
+    this.onLanguageChange,
+    this.currentLocale,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +22,40 @@ class TodayPrayersPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Today's Prayers"),
         actions: [
+          // Language switcher
+          if (onLanguageChange != null && currentLocale != null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.language),
+              tooltip: 'Change language',
+              onSelected: (value) {
+                onLanguageChange!(Locale(value));
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'en',
+                  child: Row(
+                    children: [
+                      if (currentLocale!.languageCode == 'en')
+                        const Icon(Icons.check, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('English'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'ar',
+                  child: Row(
+                    children: [
+                      if (currentLocale!.languageCode == 'ar')
+                        const Icon(Icons.check, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('العربية'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          // Theme toggle
           if (onThemeToggle != null)
             IconButton(
               icon: Icon(

@@ -94,14 +94,22 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         
         val views = RemoteViews(context.packageName, R.layout.prayer_widget)
         
-        // Update date
-        val date = prefs.getString("flutter.date", "Today") ?: "Today"
-        views.setTextViewText(R.id.widget_date, date)
+        // Get theme and language
+        val isDarkTheme = prefs.getString("flutter.is_dark_theme", "false") == "true"
+        val languageCode = prefs.getString("flutter.language_code", "en") ?: "en"
+        
+        // Set widget background based on theme
+        val backgroundColor = if (isDarkTheme) 0xFF1E1E1E.toInt() else 0xFFFFFFFF.toInt()
+        views.setInt(R.id.widget_root, "setBackgroundColor", backgroundColor)
         
         // Update counter
         val completed = prefs.getString("flutter.completed", "0") ?: "0"
         val total = prefs.getString("flutter.total", "5") ?: "5"
         views.setTextViewText(R.id.widget_counter, "$completed/$total")
+        
+        // Set counter text color based on theme
+        val counterColor = if (isDarkTheme) 0xFF64B5F6.toInt() else 0xFF2196F3.toInt()
+        views.setTextColor(R.id.widget_counter, counterColor)
         
         // Update each prayer
         for (i in 0..4) {
@@ -113,22 +121,34 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             val timeId = context.resources.getIdentifier("prayer_${i}_time", "id", context.packageName)
             val statusId = context.resources.getIdentifier("prayer_${i}_status", "id", context.packageName)
             
-            if (nameId != 0) views.setTextViewText(nameId, name)
-            if (timeId != 0) views.setTextViewText(timeId, time)
+            if (nameId != 0) {
+                views.setTextViewText(nameId, name)
+                // Set text color based on theme
+                val textColor = if (isDarkTheme) 0xFFFFFFFF.toInt() else 0xFF000000.toInt()
+                views.setTextColor(nameId, textColor)
+            }
+            if (timeId != 0) {
+                views.setTextViewText(timeId, time)
+                val timeColor = if (isDarkTheme) 0xFFB0B0B0.toInt() else 0xFF666666.toInt()
+                views.setTextColor(timeId, timeColor)
+            }
             
             if (statusId != 0) {
-                val statusText = getStatusText(status)
+                val statusText = getStatusText(status, languageCode)
                 val statusColor = getStatusColor(status)
                 views.setTextViewText(statusId, statusText)
                 views.setInt(statusId, "setBackgroundColor", statusColor)
             }
             
-            // Update background drawable based on status
+            // Update background drawable based on status and theme
             val cardLayoutId = context.resources.getIdentifier("prayer_$i", "id", context.packageName)
             if (cardLayoutId != 0) {
-                val backgroundRes = when (status) {
-                    "prayedOnTime" -> R.drawable.prayer_card_background_green
-                    "prayedLate" -> R.drawable.prayer_card_background_yellow
+                val backgroundRes = when {
+                    status == "prayedOnTime" && isDarkTheme -> R.drawable.prayer_card_background_dark_green
+                    status == "prayedOnTime" && !isDarkTheme -> R.drawable.prayer_card_background_green
+                    status == "prayedLate" && isDarkTheme -> R.drawable.prayer_card_background_dark_yellow
+                    status == "prayedLate" && !isDarkTheme -> R.drawable.prayer_card_background_yellow
+                    isDarkTheme -> R.drawable.prayer_card_background_dark
                     else -> R.drawable.prayer_card_background_gray
                 }
                 views.setInt(cardLayoutId, "setBackgroundResource", backgroundRes)
@@ -159,7 +179,14 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         }
     }
     
-    private fun getStatusText(status: String): String {
+    private fun getStatusText(status: String, languageCode: String = "en"): String {
+        if (languageCode == "ar") {
+            return when (status) {
+                "prayedOnTime" -> "في الوقت"
+                "prayedLate" -> "متأخر"
+                else -> "لم تصلي"
+            }
+        }
         return when (status) {
             "prayedOnTime" -> "On Time"
             "prayedLate" -> "Late"

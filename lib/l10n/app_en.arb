@@ -1,0 +1,46 @@
+{
+  "@@locale": "en",
+  "appTitle": "Salah Tracking",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "todaysPrayers": "Today's Prayers",
+  "@todaysPrayers": {
+    "description": "Today's prayers page title"
+  },
+  "prayerHistory": "Prayer History",
+  "@prayerHistory": {
+    "description": "Prayer history page title"
+  },
+  "fajr": "Fajr",
+  "dhuhr": "Dhuhr",
+  "asr": "Asr",
+  "maghrib": "Maghrib",
+  "isha": "Isha",
+  "notPrayed": "Not Prayed",
+  "prayedOnTime": "On Time",
+  "prayedLate": "Late",
+  "prayersCompleted": "{count} Prayers Completed",
+  "@prayersCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "locationAccessRequired": "Location access required",
+  "enableLocationServices": "Please enable location services to get prayer times",
+  "retry": "Retry",
+  "today": "Today",
+  "week": "Week",
+  "month": "Month",
+  "noPrayersRecorded": "No prayers recorded for {date}",
+  "@noPrayersRecorded": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
+}
+

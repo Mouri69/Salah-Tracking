@@ -8,8 +8,15 @@ import '../models/daily_prayers.dart';
 
 class PreviousPrayersPage extends StatefulWidget {
   final VoidCallback? onThemeToggle;
+  final Function(Locale)? onLanguageChange;
+  final Locale? currentLocale;
   
-  const PreviousPrayersPage({super.key, this.onThemeToggle});
+  const PreviousPrayersPage({
+    super.key,
+    this.onThemeToggle,
+    this.onLanguageChange,
+    this.currentLocale,
+  });
 
   @override
   State<PreviousPrayersPage> createState() => _PreviousPrayersPageState();
@@ -26,6 +33,40 @@ class _PreviousPrayersPageState extends State<PreviousPrayersPage> {
       appBar: AppBar(
         title: const Text('Prayer History'),
         actions: [
+          // Language switcher
+          if (widget.onLanguageChange != null && widget.currentLocale != null)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.language),
+              tooltip: 'Change language',
+              onSelected: (value) {
+                widget.onLanguageChange!(Locale(value));
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'en',
+                  child: Row(
+                    children: [
+                      if (widget.currentLocale!.languageCode == 'en')
+                        const Icon(Icons.check, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('English'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'ar',
+                  child: Row(
+                    children: [
+                      if (widget.currentLocale!.languageCode == 'ar')
+                        const Icon(Icons.check, size: 20),
+                      const SizedBox(width: 8),
+                      const Text('العربية'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          // Theme toggle
           if (widget.onThemeToggle != null)
             IconButton(
               icon: Icon(

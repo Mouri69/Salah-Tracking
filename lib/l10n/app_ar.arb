@@ -1,0 +1,37 @@
+{
+  "@@locale": "ar",
+  "appTitle": "تتبع الصلاة",
+  "todaysPrayers": "صلاة اليوم",
+  "prayerHistory": "سجل الصلاة",
+  "fajr": "الفجر",
+  "dhuhr": "الظهر",
+  "asr": "العصر",
+  "maghrib": "المغرب",
+  "isha": "العشاء",
+  "notPrayed": "لم تصلي",
+  "prayedOnTime": "في الوقت",
+  "prayedLate": "متأخر",
+  "prayersCompleted": "تمت {count} صلاة",
+  "@prayersCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "locationAccessRequired": "يتطلب الوصول إلى الموقع",
+  "enableLocationServices": "يرجى تفعيل خدمات الموقع للحصول على أوقات الصلاة",
+  "retry": "إعادة المحاولة",
+  "today": "اليوم",
+  "week": "الأسبوع",
+  "month": "الشهر",
+  "noPrayersRecorded": "لا توجد صلوات مسجلة لـ {date}",
+  "@noPrayersRecorded": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
+}
+

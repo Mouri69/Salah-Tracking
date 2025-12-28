@@ -6,6 +6,7 @@ class StorageService {
   static const String _prayersKey = 'daily_prayers';
   static const String _themeKey = 'is_dark_theme';
   static const String _locationKey = 'last_location';
+  static const String _languageKey = 'language_code';
 
   Future<void> saveDailyPrayers(DailyPrayers dailyPrayers) async {
     final prefs = await SharedPreferences.getInstance();
@@ -74,6 +75,16 @@ class StorageService {
       return {'latitude': lat, 'longitude': lng};
     }
     return null;
+  }
+
+  Future<void> saveLanguage(String languageCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageKey, languageCode);
+  }
+
+  Future<String> getLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_languageKey) ?? 'en';
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'theme/app_theme.dart';
 import 'providers/prayer_provider.dart';
 import 'services/storage_service.dart';
@@ -20,12 +22,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isDarkTheme = false;
+  Locale _locale = const Locale('en');
   final StorageService _storageService = StorageService();
 
   @override
   void initState() {
     super.initState();
-    _loadTheme();
+    _loadSettings();
     _initializeWidget();
   }
 
@@ -33,10 +36,12 @@ class _MyAppState extends State<MyApp> {
     await WidgetService.initialize();
   }
 
-  Future<void> _loadTheme() async {
+  Future<void> _loadSettings() async {
     final isDark = await _storageService.getTheme();
+    final languageCode = await _storageService.getLanguage();
     setState(() {
       _isDarkTheme = isDark;
+      _locale = Locale(languageCode);
     });
   }
 
@@ -45,6 +50,21 @@ class _MyAppState extends State<MyApp> {
       _isDarkTheme = !_isDarkTheme;
     });
     _storageService.saveTheme(_isDarkTheme);
+    // Update widget with new theme
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PrayerProvider>(context, listen: false).loadTodayPrayers();
+    });
+  }
+
+  void _changeLanguage(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+    _storageService.saveLanguage(locale.languageCode);
+    // Update widget with new language
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PrayerProvider>(context, listen: false).loadTodayPrayers();
+    });
   }
 
   @override
@@ -57,9 +77,22 @@ class _MyAppState extends State<MyApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: _isDarkTheme ? ThemeMode.dark : ThemeMode.light,
+        locale: _locale,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('ar'),
+        ],
         home: MainScreen(
           isDarkTheme: _isDarkTheme,
+          currentLocale: _locale,
           onThemeToggle: _toggleTheme,
+          onLanguageChange: _changeLanguage,
         ),
       ),
     );
@@ -68,12 +101,16 @@ class _MyAppState extends State<MyApp> {
 
 class MainScreen extends StatefulWidget {
   final bool isDarkTheme;
+  final Locale currentLocale;
   final VoidCallback onThemeToggle;
+  final Function(Locale) onLanguageChange;
 
   const MainScreen({
     super.key,
     required this.isDarkTheme,
+    required this.currentLocale,
     required this.onThemeToggle,
+    required this.onLanguageChange,
   });
 
   @override
@@ -84,8 +121,16 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   List<Widget> get _pages => [
-    TodayPrayersPage(onThemeToggle: widget.onThemeToggle),
-    PreviousPrayersPage(onThemeToggle: widget.onThemeToggle),
+    TodayPrayersPage(
+      onThemeToggle: widget.onThemeToggle,
+      onLanguageChange: widget.onLanguageChange,
+      currentLocale: widget.currentLocale,
+    ),
+    PreviousPrayersPage(
+      onThemeToggle: widget.onThemeToggle,
+      onLanguageChange: widget.onLanguageChange,
+      currentLocale: widget.currentLocale,
+    ),
   ];
 
   @override
