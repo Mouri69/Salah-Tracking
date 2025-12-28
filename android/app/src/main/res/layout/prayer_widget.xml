@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Today"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0/5"
+            android:textSize="14sp"
+            android:textColor="#2196F3"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Prayer Grid -->
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="3"
+        android:alignmentMode="alignMargins"
+        android:columnOrderPreserved="false"
+        android:useDefaultMargins="false">
+
+        <!-- Fajr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:background="@drawable/prayer_card_background"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/prayer_0">
+
+            <TextView
+                android:id="@+id/prayer_0_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fajr"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/prayer_0_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5:00 AM"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/prayer_0_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Prayed"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="#9E9E9E"
+                android:padding="4dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Dhuhr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:background="@drawable/prayer_card_background"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/prayer_1">
+
+            <TextView
+                android:id="@+id/prayer_1_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dhuhr"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/prayer_1_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:00 PM"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/prayer_1_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Prayed"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="#9E9E9E"
+                android:padding="4dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Asr -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:background="@drawable/prayer_card_background"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/prayer_2">
+
+            <TextView
+                android:id="@+id/prayer_2_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Asr"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/prayer_2_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3:00 PM"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/prayer_2_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Prayed"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="#9E9E9E"
+                android:padding="4dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Maghrib -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_margin="4dp"
+            android:background="@drawable/prayer_card_background"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/prayer_3">
+
+            <TextView
+                android:id="@+id/prayer_3_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Maghrib"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/prayer_3_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="6:00 PM"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/prayer_3_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Prayed"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="#9E9E9E"
+                android:padding="4dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- Isha -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:layout_columnSpan="2"
+            android:layout_margin="4dp"
+            android:background="@drawable/prayer_card_background"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:id="@+id/prayer_4">
+
+            <TextView
+                android:id="@+id/prayer_4_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Isha"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/prayer_4_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="7:30 PM"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/prayer_4_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Not Prayed"
+                android:textSize="9sp"
+                android:textColor="#FFFFFF"
+                android:background="#9E9E9E"
+                android:padding="4dp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+    </GridLayout>
+
+</LinearLayout>
+

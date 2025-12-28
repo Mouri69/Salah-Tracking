@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../services/prayer_service.dart';
 import '../services/storage_service.dart';
+import '../services/widget_service.dart';
 import '../models/daily_prayers.dart';
 import '../models/prayer_status.dart';
 
@@ -86,6 +87,9 @@ class PrayerProvider with ChangeNotifier {
       await _storageService.saveDailyPrayers(_todayPrayers!);
     }
 
+    // Update widget
+    await WidgetService.updateWidget(_todayPrayers);
+
     notifyListeners();
   }
 
@@ -129,6 +133,8 @@ class PrayerProvider with ChangeNotifier {
         date.month == DateTime.now().month &&
         date.year == DateTime.now().year) {
       _todayPrayers = updatedDailyPrayers;
+      // Update widget when today's prayers change
+      await WidgetService.updateWidget(_todayPrayers);
     }
 
     await loadAllPrayers();

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/prayer_provider.dart';
 import 'services/storage_service.dart';
+import 'services/widget_service.dart';
 import 'pages/today_prayers_page.dart';
 import 'pages/previous_prayers_page.dart';
 
@@ -25,6 +26,11 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loadTheme();
+    _initializeWidget();
+  }
+
+  Future<void> _initializeWidget() async {
+    await WidgetService.initialize();
   }
 
   Future<void> _loadTheme() async {
