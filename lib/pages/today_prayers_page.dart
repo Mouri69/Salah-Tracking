@@ -76,6 +76,11 @@ class TodayPrayersPage extends StatelessWidget {
       ),
       body: Consumer<PrayerProvider>(
         builder: (context, provider, child) {
+          // Sync from widget when this page is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            provider.syncFromWidget();
+          });
+          
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }

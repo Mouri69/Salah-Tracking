@@ -71,6 +71,7 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             android.util.Log.d("PrayerWidget", "New status for prayer $prayerIndex: $newStatus")
         
             // Save new status - use flutter. prefix for home_widget compatibility
+            // IMPORTANT: Don't overwrite name and time - preserve them!
             val editor = prefs.edit()
             editor.putString("flutter.prayer_${prayerIndex}_status", newStatus)
         
@@ -81,6 +82,19 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                 editor.putString("flutter.prayer_${prayerIndex}_performed", currentTime)
             } else {
                 editor.putString("flutter.prayer_${prayerIndex}_performed", "")
+            }
+            
+            // Make sure we don't lose name and time - they should already be there from WidgetService
+            // If they're missing, set defaults (this shouldn't happen, but just in case)
+            // Get language code for fallback name
+            val langCode = prefs.getString("flutter.language_code", "en") ?: "en"
+            if (!prefs.contains("flutter.prayer_${prayerIndex}_name")) {
+                editor.putString("flutter.prayer_${prayerIndex}_name", getPrayerName(prayerIndex, langCode))
+                android.util.Log.w("PrayerWidget", "Prayer $prayerIndex name was missing, setting default")
+            }
+            if (!prefs.contains("flutter.prayer_${prayerIndex}_time")) {
+                editor.putString("flutter.prayer_${prayerIndex}_time", "")
+                android.util.Log.w("PrayerWidget", "Prayer $prayerIndex time was missing, setting empty")
             }
         
             // Update counter

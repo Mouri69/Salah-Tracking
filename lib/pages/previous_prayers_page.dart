@@ -103,15 +103,8 @@ class _PreviousPrayersPageState extends State<PreviousPrayersPage> {
                 SliverToBoxAdapter(
                   child: _buildViewModeSelector(),
                 ),
-                SliverAppBar(
-                  pinned: true,
-                  floating: false,
-                  snap: false,
-                  expandedHeight: 0,
-                  toolbarHeight: 0,
-                  elevation: 4,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  flexibleSpace: _buildCalendar(provider),
+                SliverToBoxAdapter(
+                  child: _buildCalendar(provider),
                 ),
                 SliverFillRemaining(
                   child: Center(
@@ -151,15 +144,8 @@ class _PreviousPrayersPageState extends State<PreviousPrayersPage> {
               ),
               
               // Calendar - Pinned at top, scrolls away when scrolling down
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                snap: false,
-                expandedHeight: 0,
-                toolbarHeight: 0,
-                elevation: 4,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                flexibleSpace: _buildCalendar(provider),
+              SliverToBoxAdapter(
+                child: _buildCalendar(provider),
               ),
               
               // Prayer List - Scrollable

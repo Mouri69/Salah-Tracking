@@ -62,14 +62,15 @@ class PrayerProvider with ChangeNotifier {
       
       // Load all prayers
       await loadAllPrayers();
-      
-      // Update widget after initialization
-      if (_todayPrayers != null) {
-        await WidgetService.updateWidget(_todayPrayers);
-      }
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+    
+    // Update widget after initialization (separate from finally block to ensure it runs)
+    if (_todayPrayers != null) {
+      // Update widget immediately - don't delay
+      await WidgetService.updateWidget(_todayPrayers);
     }
   }
 
