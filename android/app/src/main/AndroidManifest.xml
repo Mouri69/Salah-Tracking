@@ -38,9 +38,12 @@
         <!-- Prayer Widget Provider -->
         <receiver
             android:name=".PrayerWidgetProvider"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.example.salah_tracking.UPDATE_PRAYER_STATUS" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

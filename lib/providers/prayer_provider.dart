@@ -147,12 +147,10 @@ class PrayerProvider with ChangeNotifier {
         date.month == DateTime.now().month &&
         date.year == DateTime.now().year) {
       _todayPrayers = updatedDailyPrayers;
-      // Update widget when today's prayers change
-      await WidgetService.updateWidget(_todayPrayers);
-    } else {
-      // Also update widget for other dates to keep counter accurate
-      await WidgetService.updateWidget(_todayPrayers);
     }
+    
+    // Always update widget when prayers change
+    await WidgetService.updateWidget(_todayPrayers);
 
     await loadAllPrayers();
     notifyListeners();

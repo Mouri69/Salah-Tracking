@@ -50,10 +50,12 @@ class _MyAppState extends State<MyApp> {
       _isDarkTheme = !_isDarkTheme;
     });
     await _storageService.saveTheme(_isDarkTheme);
-    // Update widget with new theme
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Update widget with new theme immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<PrayerProvider>(context, listen: false);
-      provider.loadTodayPrayers();
+      if (provider.todayPrayers != null) {
+        await WidgetService.updateWidget(provider.todayPrayers);
+      }
     });
   }
 
@@ -62,10 +64,10 @@ class _MyAppState extends State<MyApp> {
       _locale = locale;
     });
     await _storageService.saveLanguage(locale.languageCode);
-    // Update widget with new language
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Update widget with new language immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<PrayerProvider>(context, listen: false);
-      provider.loadTodayPrayers();
+      await provider.loadTodayPrayers();
     });
   }
 
