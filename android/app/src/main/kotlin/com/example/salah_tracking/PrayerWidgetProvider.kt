@@ -21,6 +21,15 @@ class PrayerWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
+        
+        // Handle prayer click - update status directly
+        if (intent.action == "UPDATE_PRAYER_STATUS") {
+            val prayerIndex = intent.getIntExtra("prayer_index", -1)
+            if (prayerIndex >= 0 && prayerIndex < 5) {
+                updatePrayerStatus(context, prayerIndex)
+            }
+        }
+        
         if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(
@@ -28,6 +37,52 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             )
             onUpdate(context, appWidgetManager, appWidgetIds)
         }
+    }
+    
+    private fun updatePrayerStatus(context: Context, prayerIndex: Int) {
+        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val currentStatus = prefs.getString("flutter.prayer_${prayerIndex}_status", "notPrayed") ?: "notPrayed"
+        
+        // Cycle through statuses: notPrayed -> prayedOnTime -> prayedLate -> notPrayed
+        val newStatus = when (currentStatus) {
+            "notPrayed" -> "prayedOnTime"
+            "prayedOnTime" -> "prayedLate"
+            "prayedLate" -> "notPrayed"
+            else -> "notPrayed"
+        }
+        
+        // Save new status
+        val editor = prefs.edit()
+        editor.putString("flutter.prayer_${prayerIndex}_status", newStatus)
+        
+        // Update performed time if prayed
+        if (newStatus != "notPrayed") {
+            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+            val currentTime = timeFormat.format(java.util.Date())
+            editor.putString("flutter.prayer_${prayerIndex}_performed", currentTime)
+        } else {
+            editor.putString("flutter.prayer_${prayerIndex}_performed", "")
+        }
+        
+        // Update counter
+        var completed = 0
+        for (i in 0..4) {
+            val status = prefs.getString("flutter.prayer_${i}_status", "notPrayed") ?: "notPrayed"
+            if (i == prayerIndex) {
+                if (newStatus != "notPrayed") completed++
+            } else {
+                if (status != "notPrayed") completed++
+            }
+        }
+        editor.putString("flutter.completed", completed.toString())
+        editor.apply()
+        
+        // Update widget immediately
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(
+            android.content.ComponentName(context, PrayerWidgetProvider::class.java)
+        )
+        onUpdate(context, appWidgetManager, appWidgetIds)
     }
 
     private fun updateAppWidget(
@@ -68,16 +123,24 @@ class PrayerWidgetProvider : AppWidgetProvider() {
                 views.setInt(statusId, "setBackgroundColor", statusColor)
             }
             
-            // Set click intent
-            val clickIntent = Intent(context, MainActivity::class.java).apply {
-                putExtra("prayer_index", i)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            val prayerLayoutId = context.resources.getIdentifier("prayer_$i", "id", context.packageName)
-            if (prayerLayoutId != 0) {
+            // Update background drawable based on status
+            val cardLayoutId = context.resources.getIdentifier("prayer_$i", "id", context.packageName)
+            if (cardLayoutId != 0) {
+                val backgroundRes = when (status) {
+                    "prayedOnTime" -> R.drawable.prayer_card_background_green
+                    "prayedLate" -> R.drawable.prayer_card_background_yellow
+                    else -> R.drawable.prayer_card_background_gray
+                }
+                views.setInt(cardLayoutId, "setBackgroundResource", backgroundRes)
+                
+                // Set click intent to update status directly (no app opening)
+                val clickIntent = Intent(context, PrayerWidgetProvider::class.java).apply {
+                    action = "UPDATE_PRAYER_STATUS"
+                    putExtra("prayer_index", i)
+                }
                 views.setOnClickPendingIntent(
-                    prayerLayoutId,
-                    android.app.PendingIntent.getActivity(context, i, clickIntent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+                    cardLayoutId,
+                    android.app.PendingIntent.getBroadcast(context, i, clickIntent, android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
                 )
             }
         }
