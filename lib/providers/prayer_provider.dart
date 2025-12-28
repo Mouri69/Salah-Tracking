@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import '../services/location_service.dart';
 import '../services/prayer_service.dart';
 import '../services/storage_service.dart';
@@ -149,8 +151,10 @@ class PrayerProvider with ChangeNotifier {
       _todayPrayers = updatedDailyPrayers;
     }
     
-    // Always update widget when prayers change
-    await WidgetService.updateWidget(_todayPrayers);
+    // Always update widget when prayers change (only for today)
+    if (_todayPrayers != null) {
+      await WidgetService.updateWidget(_todayPrayers);
+    }
 
     await loadAllPrayers();
     notifyListeners();
@@ -169,6 +173,79 @@ class PrayerProvider with ChangeNotifier {
     }
 
     return {'total': total, 'completed': completed};
+  }
+
+  // Sync widget changes back to Flutter
+  Future<void> syncFromWidget() async {
+    if (_todayPrayers == null) return;
+    
+    try {
+      // Read widget data from SharedPreferences (home_widget stores with "flutter." prefix)
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Check if any prayer status changed in widget
+      bool hasChanges = false;
+      final updatedPrayers = _todayPrayers!.prayers.toList();
+      
+      for (int i = 0; i < updatedPrayers.length && i < 5; i++) {
+        // home_widget stores data with "flutter." prefix in FlutterSharedPreferences
+        final widgetStatus = prefs.getString('flutter.prayer_${i}_status');
+        if (widgetStatus != null) {
+          PrayerStatus? newStatus;
+          switch (widgetStatus) {
+            case 'notPrayed':
+              newStatus = PrayerStatus.notPrayed;
+              break;
+            case 'prayedOnTime':
+              newStatus = PrayerStatus.prayedOnTime;
+              break;
+            case 'prayedLate':
+              newStatus = PrayerStatus.prayedLate;
+              break;
+          }
+          
+          if (newStatus != null && updatedPrayers[i].status != newStatus) {
+            final performedAtStr = prefs.getString('flutter.prayer_${i}_performed');
+            DateTime? performedAt;
+            if (performedAtStr != null && performedAtStr.isNotEmpty) {
+              try {
+                // Parse the time format from widget (hh:mm a)
+                final format = DateFormat('hh:mm a');
+                final time = format.parse(performedAtStr);
+                performedAt = DateTime(
+                  _todayPrayers!.date.year,
+                  _todayPrayers!.date.month,
+                  _todayPrayers!.date.day,
+                  time.hour,
+                  time.minute,
+                );
+              } catch (e) {
+                // If parsing fails, use current time
+                performedAt = DateTime.now();
+              }
+            }
+            
+            updatedPrayers[i] = updatedPrayers[i].copyWith(
+              status: newStatus,
+              performedAt: newStatus != PrayerStatus.notPrayed ? (performedAt ?? DateTime.now()) : null,
+            );
+            hasChanges = true;
+          }
+        }
+      }
+      
+      if (hasChanges) {
+        _todayPrayers = DailyPrayers(
+          date: _todayPrayers!.date,
+          prayers: updatedPrayers,
+        );
+        await _storageService.saveDailyPrayers(_todayPrayers!);
+        await loadAllPrayers();
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail - widget sync is optional
+    }
   }
 }
 

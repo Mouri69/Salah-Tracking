@@ -54,7 +54,10 @@ class _MyAppState extends State<MyApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<PrayerProvider>(context, listen: false);
       if (provider.todayPrayers != null) {
+        // Force widget update with new theme
         await WidgetService.updateWidget(provider.todayPrayers);
+      } else {
+        await provider.loadTodayPrayers();
       }
     });
   }
@@ -121,8 +124,29 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Sync widget changes when app resumes
+      final provider = Provider.of<PrayerProvider>(context, listen: false);
+      provider.syncFromWidget();
+    }
+  }
 
   List<Widget> get _pages => [
     TodayPrayersPage(

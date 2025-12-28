@@ -41,12 +41,13 @@ class WidgetService {
     await HomeWidget.saveWidgetData<String>('total', '${dailyPrayers.totalCount}');
 
     // Save each prayer's data with translations
-    final prayerNames = _getPrayerNames(languageCode);
+    // Use the actual prayer names from the prayer records (they're already translated)
     for (int i = 0; i < prayers.length && i < 5; i++) {
       final prayer = prayers[i];
-      await HomeWidget.saveWidgetData<String>('prayer_${i}_name', prayerNames[i]);
+      // Use the prayer name directly from the record (it's already in the correct language)
+      await HomeWidget.saveWidgetData<String>('prayer_${i}_name', prayer.prayerName);
       await HomeWidget.saveWidgetData<String>('prayer_${i}_time', timeFormat.format(prayer.prayerTime));
-      await HomeWidget.saveWidgetData<String>('prayer_${i}_status', _getStatusText(prayer.status, languageCode));
+      await HomeWidget.saveWidgetData<String>('prayer_${i}_status', prayer.status.name);
       
       if (prayer.performedAt != null) {
         await HomeWidget.saveWidgetData<String>('prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
@@ -61,26 +62,6 @@ class WidgetService {
     );
   }
 
-  static List<String> _getPrayerNames(String languageCode) {
-    if (languageCode == 'ar') {
-      return ['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'];
-    }
-    return ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-  }
-
-  static String _getStatusText(PrayerStatus status, String languageCode) {
-    if (languageCode == 'ar') {
-      switch (status) {
-        case PrayerStatus.notPrayed:
-          return 'notPrayed';
-        case PrayerStatus.prayedOnTime:
-          return 'prayedOnTime';
-        case PrayerStatus.prayedLate:
-          return 'prayedLate';
-      }
-    }
-    return status.name;
-  }
 
   // Get status color name for widget
   static String getStatusColor(PrayerStatus status) {

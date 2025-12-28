@@ -104,14 +104,18 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         appWidgetId: Int
     ) {
         try {
+            // home_widget stores data in FlutterSharedPreferences with specific key format
             val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
             
             val views = RemoteViews(context.packageName, R.layout.prayer_widget)
             
-            // Get theme and language
+            // Get theme and language - home_widget stores as "flutter.keyName" in SharedPreferences
+            // The home_widget package stores data with "flutter." prefix
             val isDarkThemeStr = prefs.getString("flutter.is_dark_theme", "false") ?: "false"
             val isDarkTheme = isDarkThemeStr == "true"
             val languageCode = prefs.getString("flutter.language_code", "en") ?: "en"
+            
+            android.util.Log.d("PrayerWidget", "Theme: $isDarkTheme, Language: $languageCode")
             
             // Set widget background based on theme
             try {
@@ -138,9 +142,13 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             
             // Update each prayer
             for (i in 0..4) {
-            val name = prefs.getString("flutter.prayer_${i}_name", getPrayerName(i)) ?: getPrayerName(i)
-            val time = prefs.getString("flutter.prayer_${i}_time", "") ?: ""
-            val status = prefs.getString("flutter.prayer_${i}_status", "notPrayed") ?: "notPrayed"
+            // Read prayer data - home_widget stores with "flutter." prefix
+            // The home_widget package stores String values with "flutter.keyName" format
+            val name = prefs.getString("flutter.prayer_${i}_name", null) ?: getPrayerName(i, languageCode)
+            val time = prefs.getString("flutter.prayer_${i}_time", null) ?: ""
+            val status = prefs.getString("flutter.prayer_${i}_status", null) ?: "notPrayed"
+            
+            android.util.Log.d("PrayerWidget", "Prayer $i: name=$name, time=$time, status=$status")
             
             try {
                 val nameId = context.resources.getIdentifier("prayer_${i}_name", "id", context.packageName)
@@ -209,7 +217,17 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         }
     }
     
-    private fun getPrayerName(index: Int): String {
+    private fun getPrayerName(index: Int, languageCode: String = "en"): String {
+        if (languageCode == "ar") {
+            return when (index) {
+                0 -> "الفجر"
+                1 -> "الظهر"
+                2 -> "العصر"
+                3 -> "المغرب"
+                4 -> "العشاء"
+                else -> ""
+            }
+        }
         return when (index) {
             0 -> "Fajr"
             1 -> "Dhuhr"

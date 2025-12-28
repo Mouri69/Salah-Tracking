@@ -50,8 +50,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get locationAccessRequired => 'يتطلب الوصول إلى الموقع';
 
   @override
-  String get enableLocationServices =>
-      'يرجى تفعيل خدمات الموقع للحصول على أوقات الصلاة';
+  String get enableLocationServices => 'يرجى تفعيل خدمات الموقع للحصول على أوقات الصلاة';
 
   @override
   String get retry => 'إعادة المحاولة';
