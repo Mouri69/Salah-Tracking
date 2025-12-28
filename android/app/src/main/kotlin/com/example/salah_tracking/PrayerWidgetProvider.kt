@@ -77,12 +77,15 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         editor.putString("flutter.completed", completed.toString())
         editor.apply()
         
-        // Update widget immediately
+        // Update widget immediately - force refresh with new colors
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val appWidgetIds = appWidgetManager.getAppWidgetIds(
             android.content.ComponentName(context, PrayerWidgetProvider::class.java)
         )
-        onUpdate(context, appWidgetManager, appWidgetIds)
+        // Call updateAppWidget directly for each widget to ensure colors update
+        for (appWidgetId in appWidgetIds) {
+            updateAppWidget(context, appWidgetManager, appWidgetId)
+        }
     }
 
     private fun updateAppWidget(
@@ -95,7 +98,8 @@ class PrayerWidgetProvider : AppWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.prayer_widget)
         
         // Get theme and language
-        val isDarkTheme = prefs.getString("flutter.is_dark_theme", "false") == "true"
+        val isDarkThemeStr = prefs.getString("flutter.is_dark_theme", "false") ?: "false"
+        val isDarkTheme = isDarkThemeStr == "true"
         val languageCode = prefs.getString("flutter.language_code", "en") ?: "en"
         
         // Set widget background based on theme

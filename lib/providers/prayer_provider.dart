@@ -70,15 +70,29 @@ class PrayerProvider with ChangeNotifier {
     if (_currentPosition == null) return;
 
     final today = DateTime.now();
+    final languageCode = await _storageService.getLanguage();
     final savedPrayers = await _storageService.getPrayersForDate(today);
 
     if (savedPrayers != null) {
       _todayPrayers = savedPrayers;
+      // Update prayer names based on current language
+      final prayerNames = _prayerService.getPrayerNames(languageCode);
+      final updatedPrayers = _todayPrayers!.prayers.asMap().entries.map((entry) {
+        final index = entry.key;
+        final prayer = entry.value;
+        return prayer.copyWith(prayerName: prayerNames[index]);
+      }).toList();
+      _todayPrayers = DailyPrayers(
+        date: _todayPrayers!.date,
+        prayers: updatedPrayers,
+      );
+      await _storageService.saveDailyPrayers(_todayPrayers!);
     } else {
       // Generate new prayers for today
       final prayers = _prayerService.getPrayersForDate(
         today,
         _currentPosition!,
+        languageCode: languageCode,
       );
       _todayPrayers = DailyPrayers(
         date: today,
@@ -134,6 +148,9 @@ class PrayerProvider with ChangeNotifier {
         date.year == DateTime.now().year) {
       _todayPrayers = updatedDailyPrayers;
       // Update widget when today's prayers change
+      await WidgetService.updateWidget(_todayPrayers);
+    } else {
+      // Also update widget for other dates to keep counter accurate
       await WidgetService.updateWidget(_todayPrayers);
     }
 

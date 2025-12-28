@@ -45,25 +45,27 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _toggleTheme() {
+  void _toggleTheme() async {
     setState(() {
       _isDarkTheme = !_isDarkTheme;
     });
-    _storageService.saveTheme(_isDarkTheme);
+    await _storageService.saveTheme(_isDarkTheme);
     // Update widget with new theme
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PrayerProvider>(context, listen: false).loadTodayPrayers();
+      final provider = Provider.of<PrayerProvider>(context, listen: false);
+      provider.loadTodayPrayers();
     });
   }
 
-  void _changeLanguage(Locale locale) {
+  void _changeLanguage(Locale locale) async {
     setState(() {
       _locale = locale;
     });
-    _storageService.saveLanguage(locale.languageCode);
+    await _storageService.saveLanguage(locale.languageCode);
     // Update widget with new language
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PrayerProvider>(context, listen: false).loadTodayPrayers();
+      final provider = Provider.of<PrayerProvider>(context, listen: false);
+      provider.loadTodayPrayers();
     });
   }
 

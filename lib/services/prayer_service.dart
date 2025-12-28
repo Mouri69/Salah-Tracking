@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/prayer_record.dart';
 
 class PrayerService {
-  static const List<String> prayerNames = [
+  static const List<String> prayerNamesEn = [
     'Fajr',
     'Dhuhr',
     'Asr',
@@ -11,7 +11,20 @@ class PrayerService {
     'Isha',
   ];
 
-  List<PrayerRecord> getPrayersForDate(DateTime date, Position position) {
+  static const List<String> prayerNamesAr = [
+    'الفجر',
+    'الظهر',
+    'العصر',
+    'المغرب',
+    'العشاء',
+  ];
+
+  List<String> getPrayerNames(String languageCode) {
+    return languageCode == 'ar' ? prayerNamesAr : prayerNamesEn;
+  }
+
+  List<PrayerRecord> getPrayersForDate(DateTime date, Position position, {String languageCode = 'en'}) {
+    final prayerNames = getPrayerNames(languageCode);
     final coordinates = Coordinates(position.latitude, position.longitude);
     final params = CalculationParameters(
       fajrAngle: 18.0,
