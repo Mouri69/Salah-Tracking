@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/prayer_provider.dart';
 import '../widgets/prayer_grid_widget.dart';
 
-class TodayPrayersPage extends StatelessWidget {
+class TodayPrayersPage extends StatefulWidget {
   final VoidCallback? onThemeToggle;
   final Function(Locale)? onLanguageChange;
   final Locale? currentLocale;
@@ -17,25 +18,51 @@ class TodayPrayersPage extends StatelessWidget {
   });
 
   @override
+  State<TodayPrayersPage> createState() => _TodayPrayersPageState();
+}
+
+class _TodayPrayersPageState extends State<TodayPrayersPage> {
+  Timer? _syncTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<PrayerProvider>();
+      provider.syncFromWidget();
+      _syncTimer?.cancel();
+      _syncTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        provider.syncFromWidget();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Today's Prayers"),
         actions: [
           // Language switcher
-          if (onLanguageChange != null && currentLocale != null)
+          if (widget.onLanguageChange != null && widget.currentLocale != null)
             PopupMenuButton<String>(
               icon: const Icon(Icons.language),
               tooltip: 'Change language',
               onSelected: (value) {
-                onLanguageChange!(Locale(value));
+                widget.onLanguageChange!(Locale(value));
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'en',
                   child: Row(
                     children: [
-                      if (currentLocale!.languageCode == 'en')
+                      if (widget.currentLocale!.languageCode == 'en')
                         const Icon(Icons.check, size: 20),
                       const SizedBox(width: 8),
                       const Text('English'),
@@ -46,7 +73,7 @@ class TodayPrayersPage extends StatelessWidget {
                   value: 'ar',
                   child: Row(
                     children: [
-                      if (currentLocale!.languageCode == 'ar')
+                      if (widget.currentLocale!.languageCode == 'ar')
                         const Icon(Icons.check, size: 20),
                       const SizedBox(width: 8),
                       const Text('العربية'),
@@ -56,14 +83,14 @@ class TodayPrayersPage extends StatelessWidget {
               ],
             ),
           // Theme toggle
-          if (onThemeToggle != null)
+          if (widget.onThemeToggle != null)
             IconButton(
               icon: Icon(
                 Theme.of(context).brightness == Brightness.dark
                     ? Icons.light_mode
                     : Icons.dark_mode,
               ),
-              onPressed: onThemeToggle,
+              onPressed: widget.onThemeToggle,
               tooltip: 'Toggle theme',
             ),
           IconButton(

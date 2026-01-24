@@ -191,11 +191,44 @@ class PrayerWidgetProvider : AppWidgetProvider() {
             for (i in 0..4) {
             // Read prayer data - home_widget stores with "flutter." prefix
             // The home_widget package stores String values with "flutter.keyName" format
-            val name = prefs.getString("flutter.prayer_${i}_name", null) ?: getPrayerName(i, languageCode)
-            val time = prefs.getString("flutter.prayer_${i}_time", null) ?: ""
-            val status = prefs.getString("flutter.prayer_${i}_status", null) ?: "notPrayed"
+            // Try to read as String first, but also check if it's stored as a different type
+            val timeKey = "flutter.prayer_${i}_time"
+            val nameKey = "flutter.prayer_${i}_name"
+            val statusKey = "flutter.prayer_${i}_status"
             
-            android.util.Log.d("PrayerWidget", "Prayer $i: name=$name, time=$time, status=$status")
+            // Debug: Check all values in SharedPreferences for this prayer
+            val allValues = prefs.all
+            if (allValues.containsKey(timeKey)) {
+                val timeValue = allValues[timeKey]
+                android.util.Log.d("PrayerWidget", "Prayer $i time key exists, type: ${timeValue?.javaClass?.simpleName}, value: $timeValue")
+            } else {
+                android.util.Log.w("PrayerWidget", "Prayer $i time key does NOT exist in SharedPreferences")
+            }
+            
+            var name = prefs.getString(nameKey, null)
+            var time = prefs.getString(timeKey, null)
+            var status = prefs.getString(statusKey, null)
+            
+            // If time is null or empty, try to get it from allValues
+            if (time == null || time.isEmpty()) {
+                if (allValues.containsKey(timeKey)) {
+                    val timeValue = allValues[timeKey]
+                    time = timeValue?.toString() ?: ""
+                    android.util.Log.d("PrayerWidget", "Retrieved time for prayer $i from allValues: $time")
+                } else {
+                    android.util.Log.w("PrayerWidget", "Time key not found in allValues for prayer $i")
+                }
+            }
+            
+            // Fallback to defaults
+            if (name == null || name.isEmpty()) name = getPrayerName(i, languageCode)
+            if (time == null || time.isEmpty()) {
+                time = ""
+                android.util.Log.w("PrayerWidget", "Time is empty for prayer $i after all attempts")
+            }
+            if (status == null || status.isEmpty()) status = "notPrayed"
+            
+            android.util.Log.d("PrayerWidget", "Prayer $i final: name=$name, time=$time, status=$status")
             
             try {
                 val nameId = context.resources.getIdentifier("prayer_${i}_name", "id", context.packageName)

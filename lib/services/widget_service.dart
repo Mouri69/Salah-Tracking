@@ -1,4 +1,5 @@
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../models/daily_prayers.dart';
 import '../models/prayer_status.dart';
@@ -19,15 +20,19 @@ class WidgetService {
 
   // Update widget with today's prayer data
   static Future<void> updateWidget(DailyPrayers? dailyPrayers) async {
+    print('WidgetService: updateWidget called with dailyPrayers: ${dailyPrayers != null}');
     if (dailyPrayers == null) {
-      print('WidgetService: updateWidget called with null dailyPrayers');
+      print('WidgetService: updateWidget called with null dailyPrayers - ABORTING');
       return;
     }
 
     try {
+      print('WidgetService: Starting widget update...');
       final storageService = StorageService();
       final isDarkTheme = await storageService.getTheme();
       final languageCode = await storageService.getLanguage();
+      
+      print('WidgetService: Theme: $isDarkTheme, Language: $languageCode');
       
       final timeFormat = DateFormat('hh:mm a', languageCode);
       final dateFormat = DateFormat('MMM d', languageCode);
@@ -56,24 +61,55 @@ class WidgetService {
         final prayerStatus = prayer.status.name;
         
         // Save all prayer data - make sure to save even if empty
-        await HomeWidget.saveWidgetData<String>('prayer_${i}_name', prayerName);
-        await HomeWidget.saveWidgetData<String>('prayer_${i}_time', prayerTime);
-        await HomeWidget.saveWidgetData<String>('prayer_${i}_status', prayerStatus);
-        
-        if (prayer.performedAt != null) {
-          await HomeWidget.saveWidgetData<String>('prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
-        } else {
-          await HomeWidget.saveWidgetData<String>('prayer_${i}_performed', '');
+        // IMPORTANT: Save as String explicitly and verify the save succeeded
+        try {
+          // Save using home_widget
+          await HomeWidget.saveWidgetData<String>('prayer_${i}_name', prayerName);
+          await HomeWidget.saveWidgetData<String>('prayer_${i}_time', prayerTime);
+          await HomeWidget.saveWidgetData<String>('prayer_${i}_status', prayerStatus);
+          
+          if (prayer.performedAt != null) {
+            await HomeWidget.saveWidgetData<String>('prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
+          } else {
+            await HomeWidget.saveWidgetData<String>('prayer_${i}_performed', '');
+          }
+          
+          // ALSO save directly to SharedPreferences as backup (home_widget uses FlutterSharedPreferences)
+          // This ensures the data is definitely saved even if home_widget has issues
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('flutter.prayer_${i}_name', prayerName);
+          await prefs.setString('flutter.prayer_${i}_time', prayerTime);
+          await prefs.setString('flutter.prayer_${i}_status', prayerStatus);
+          if (prayer.performedAt != null) {
+            await prefs.setString('flutter.prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
+          } else {
+            await prefs.setString('flutter.prayer_${i}_performed', '');
+          }
+          
+          print('WidgetService: Saved prayer $i - name: "$prayerName", time: "$prayerTime", status: "$prayerStatus"');
+          
+          // Verify the save by reading it back from SharedPreferences
+          final savedTime = prefs.getString('flutter.prayer_${i}_time') ?? '';
+          print('WidgetService: Verified saved time for prayer $i: "$savedTime" (expected: "$prayerTime")');
+          
+          if (savedTime != prayerTime) {
+            print('WidgetService: WARNING - Saved time does not match! Expected: "$prayerTime", Got: "$savedTime"');
+          } else {
+            print('WidgetService: SUCCESS - Prayer $i time saved correctly!');
+          }
+        } catch (e, stackTrace) {
+          print('WidgetService: ERROR saving prayer $i data: $e');
+          print('WidgetService: Stack trace: $stackTrace');
         }
-        
-        // Debug: Print what we're saving
-        print('WidgetService: Saving prayer $i - name: $prayerName, time: $prayerTime, status: $prayerStatus');
       }
     } catch (e) {
       print('WidgetService: Error updating widget: $e');
       rethrow;
     }
 
+    // Wait a moment to ensure all data is committed to SharedPreferences
+    await Future.delayed(const Duration(milliseconds: 100));
+    
     // Update the widget - force update
     try {
       await HomeWidget.updateWidget(
@@ -90,6 +126,8 @@ class WidgetService {
         androidName: _androidProviderName,
       );
     }
+    
+    print('WidgetService: Widget update completed');
   }
 
 

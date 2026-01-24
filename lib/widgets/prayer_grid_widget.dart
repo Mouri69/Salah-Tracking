@@ -15,23 +15,62 @@ class PrayerGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: prayers.length,
-      itemBuilder: (context, index) {
-        final prayer = prayers[index];
-        return _PrayerCard(
-          prayer: prayer,
-          onTap: () => onPrayerTap(index),
+    if (prayers.isEmpty) return const SizedBox.shrink();
+
+    // If we have exactly 5 prayers, we use a special layout:
+    // Row 1: 2 prayers
+    // Row 2: 3 prayers
+    // This ensures no prayer is left alone.
+    if (prayers.length == 5) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // First Row: 2 items
+              Row(
+                children: [
+                  Expanded(child: _buildPrayerItem(0)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildPrayerItem(1)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Second Row: 3 items
+              Row(
+                children: [
+                  Expanded(child: _buildPrayerItem(2)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildPrayerItem(3)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildPrayerItem(4)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Fallback for other counts (though it should always be 5)
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.center,
+      children: List.generate(prayers.length, (index) {
+        return SizedBox(
+          width: (MediaQuery.of(context).size.width - 42) / 2, // Approx half width
+          child: _buildPrayerItem(index),
         );
-      },
+      }),
+    );
+  }
+
+  Widget _buildPrayerItem(int index) {
+    return _PrayerCard(
+      prayer: prayers[index],
+      onTap: () => onPrayerTap(index),
     );
   }
 }
@@ -75,7 +114,7 @@ class _PrayerCard extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -128,34 +167,20 @@ class _PrayerCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: statusColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _getStatusText(prayer.status),
+                    prayer.status.label,
                     style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      fontSize: 9,
                     ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                
-                // Performed Time (if available)
-                if (prayer.performedAt != null) ...[
-                  const SizedBox(height: 4),
-                  Flexible(
-                    child: Text(
-                      timeFormat.format(prayer.performedAt!),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 8,
-                            color: isDark ? Colors.grey[500] : Colors.grey[700],
-                          ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -163,16 +188,4 @@ class _PrayerCard extends StatelessWidget {
       ),
     );
   }
-
-  String _getStatusText(PrayerStatus status) {
-    switch (status) {
-      case PrayerStatus.notPrayed:
-        return 'Not Prayed';
-      case PrayerStatus.prayedOnTime:
-        return 'On Time';
-      case PrayerStatus.prayedLate:
-        return 'Late';
-    }
-  }
 }
-

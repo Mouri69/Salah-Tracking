@@ -62,15 +62,28 @@ class PrayerProvider with ChangeNotifier {
       
       // Load all prayers
       await loadAllPrayers();
+
+      // Sync from widget to get latest status updates
+      await syncFromWidget();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
     
     // Update widget after initialization (separate from finally block to ensure it runs)
+    print('PrayerProvider: Initialization complete. _todayPrayers is ${_todayPrayers != null ? "NOT null" : "NULL"}');
     if (_todayPrayers != null) {
+      print('PrayerProvider: Calling WidgetService.updateWidget with ${_todayPrayers!.prayers.length} prayers');
       // Update widget immediately - don't delay
-      await WidgetService.updateWidget(_todayPrayers);
+      try {
+        await WidgetService.updateWidget(_todayPrayers);
+        print('PrayerProvider: WidgetService.updateWidget completed successfully');
+      } catch (e, stackTrace) {
+        print('PrayerProvider: ERROR calling WidgetService.updateWidget: $e');
+        print('PrayerProvider: Stack trace: $stackTrace');
+      }
+    } else {
+      print('PrayerProvider: WARNING - _todayPrayers is null, cannot update widget!');
     }
   }
 
@@ -110,7 +123,18 @@ class PrayerProvider with ChangeNotifier {
     }
 
     // Always update widget after loading prayers
-    await WidgetService.updateWidget(_todayPrayers);
+    if (_todayPrayers != null) {
+      print('PrayerProvider.loadTodayPrayers: Calling WidgetService.updateWidget with ${_todayPrayers!.prayers.length} prayers');
+      try {
+        await WidgetService.updateWidget(_todayPrayers);
+        print('PrayerProvider.loadTodayPrayers: WidgetService.updateWidget completed successfully');
+      } catch (e, stackTrace) {
+        print('PrayerProvider.loadTodayPrayers: ERROR calling WidgetService.updateWidget: $e');
+        print('PrayerProvider.loadTodayPrayers: Stack trace: $stackTrace');
+      }
+    } else {
+      print('PrayerProvider.loadTodayPrayers: WARNING - _todayPrayers is null, cannot update widget!');
+    }
 
     notifyListeners();
   }
@@ -246,16 +270,25 @@ class PrayerProvider with ChangeNotifier {
       }
       
       if (hasChanges) {
+        print('PrayerProvider.syncFromWidget: Has changes, updating prayers...');
         _todayPrayers = DailyPrayers(
           date: _todayPrayers!.date,
           prayers: updatedPrayers,
         );
         await _storageService.saveDailyPrayers(_todayPrayers!);
         await loadAllPrayers();
+        
+        // Update widget with new status
+        await WidgetService.updateWidget(_todayPrayers);
+        
         notifyListeners();
+        print('PrayerProvider.syncFromWidget: Changes synced and UI updated');
+      } else {
+        print('PrayerProvider.syncFromWidget: No changes detected');
       }
-    } catch (e) {
-      // Silently fail - widget sync is optional
+    } catch (e, stackTrace) {
+      print('PrayerProvider.syncFromWidget: ERROR: $e');
+      print('PrayerProvider.syncFromWidget: Stack trace: $stackTrace');
     }
   }
 }
