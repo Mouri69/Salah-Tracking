@@ -40,4 +40,3 @@ extension PrayerStatusExtension on PrayerStatus {
     }
   }
 }
-

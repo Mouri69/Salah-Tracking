@@ -9,7 +9,7 @@ import '../services/widget_service.dart';
 import '../models/daily_prayers.dart';
 import '../models/prayer_status.dart';
 
-class PrayerProvider with ChangeNotifier {
+class PrayerProvider with ChangeNotifier, WidgetsBindingObserver {
   final LocationService _locationService = LocationService();
   final PrayerService _prayerService = PrayerService();
   final StorageService _storageService = StorageService();
@@ -18,6 +18,24 @@ class PrayerProvider with ChangeNotifier {
   DailyPrayers? _todayPrayers;
   List<DailyPrayers> _allPrayers = [];
   bool _isLoading = false;
+
+  PrayerProvider() {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print('PrayerProvider: App resumed, syncing from widget...');
+      syncFromWidget();
+    }
+  }
 
   Position? get currentPosition => _currentPosition;
   DailyPrayers? get todayPrayers => _todayPrayers;
@@ -217,14 +235,24 @@ class PrayerProvider with ChangeNotifier {
     try {
       // Read widget data from SharedPreferences (home_widget stores with "flutter." prefix)
       final prefs = await SharedPreferences.getInstance();
+      await prefs.reload(); // Force reload to get latest data from native side
       
       // Check if any prayer status changed in widget
       bool hasChanges = false;
       final updatedPrayers = _todayPrayers!.prayers.toList();
       
       for (int i = 0; i < updatedPrayers.length && i < 5; i++) {
-        // home_widget stores data with "flutter." prefix in FlutterSharedPreferences
-        final widgetStatus = prefs.getString('flutter.prayer_${i}_status');
+        // We use standard 'prayer_X_status' keys now (no 'flutter.' prefix needed when reading via SharedPreferences)
+        // SharedPreferences plugin automatically handles the prefix internally.
+        
+        // Try reading with the standard key (plugin adds prefix under the hood)
+        String? widgetStatus = prefs.getString('prayer_${i}_status');
+        
+        // Fallback: Check if it was saved with 'flutter.' prefix explicitly (old way)
+        if (widgetStatus == null) {
+           widgetStatus = prefs.getString('flutter.prayer_${i}_status');
+        }
+
         if (widgetStatus != null) {
           PrayerStatus? newStatus;
           switch (widgetStatus) {
@@ -240,7 +268,11 @@ class PrayerProvider with ChangeNotifier {
           }
           
           if (newStatus != null && updatedPrayers[i].status != newStatus) {
-            final performedAtStr = prefs.getString('flutter.prayer_${i}_performed');
+            String? performedAtStr = prefs.getString('prayer_${i}_performed');
+            if (performedAtStr == null) {
+               performedAtStr = prefs.getString('flutter.prayer_${i}_performed');
+            }
+
             DateTime? performedAt;
             if (performedAtStr != null && performedAtStr.isNotEmpty) {
               try {

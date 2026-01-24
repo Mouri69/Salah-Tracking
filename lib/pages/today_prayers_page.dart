@@ -158,28 +158,31 @@ class _TodayPrayersPageState extends State<TodayPrayersPage> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Text(
-                            dateFormat.format(provider.todayPrayers!.date),
-                            style: Theme.of(context).textTheme.titleLarge,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${provider.todayPrayers!.completedCount}/${provider.todayPrayers!.totalCount} Prayers Completed',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            Text(
+                              dateFormat.format(provider.todayPrayers!.date),
+                              style: Theme.of(context).textTheme.titleLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${provider.todayPrayers!.completedCount}/${provider.todayPrayers!.totalCount} Prayers Completed',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
