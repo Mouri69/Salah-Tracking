@@ -17,6 +17,8 @@ class PrayerGridWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (prayers.isEmpty) return const SizedBox.shrink();
 
+    print('PrayerGridWidget: Building with ${prayers.length} prayers');
+
     // If we have exactly 5 prayers, we use a special layout:
     // Row 1: 2 prayers
     // Row 2: 3 prayers

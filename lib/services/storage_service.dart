@@ -44,10 +44,15 @@ class StorageService {
       return [];
     }
     
-    final jsonList = jsonDecode(jsonString) as List;
-    return jsonList
-        .map((json) => DailyPrayers.fromJson(json))
-        .toList();
+    try {
+      final jsonList = jsonDecode(jsonString) as List;
+      return jsonList
+          .map((json) => DailyPrayers.fromJson(json))
+          .toList();
+    } catch (e) {
+      print('StorageService: Error parsing prayers JSON: $e');
+      return [];
+    }
   }
 
   Future<void> saveTheme(bool isDark) async {

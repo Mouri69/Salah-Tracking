@@ -77,19 +77,22 @@ class WidgetService {
           // ALSO save directly to SharedPreferences as backup (home_widget uses FlutterSharedPreferences)
           // This ensures the data is definitely saved even if home_widget has issues
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('flutter.prayer_${i}_name', prayerName);
-          await prefs.setString('flutter.prayer_${i}_time', prayerTime);
-          await prefs.setString('flutter.prayer_${i}_status', prayerStatus);
+          // NOTE: SharedPreferences plugin adds 'flutter.' prefix automatically to keys.
+          // We want the final key in XML to be 'flutter.prayer_${i}_name', so we should use 'prayer_${i}_name' here.
+          await prefs.setString('prayer_${i}_name', prayerName);
+          await prefs.setString('prayer_${i}_time', prayerTime);
+          await prefs.setString('prayer_${i}_status', prayerStatus);
           if (prayer.performedAt != null) {
-            await prefs.setString('flutter.prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
+            await prefs.setString('prayer_${i}_performed', timeFormat.format(prayer.performedAt!));
           } else {
-            await prefs.setString('flutter.prayer_${i}_performed', '');
+            await prefs.setString('prayer_${i}_performed', '');
           }
           
           print('WidgetService: Saved prayer $i - name: "$prayerName", time: "$prayerTime", status: "$prayerStatus"');
           
-          // Verify the save by reading it back from SharedPreferences
-          final savedTime = prefs.getString('flutter.prayer_${i}_time') ?? '';
+          // Verify the save by reading it back
+          // When reading with SharedPreferences plugin, we use the same key (plugin handles prefix)
+          final savedTime = prefs.getString('prayer_${i}_time') ?? '';
           print('WidgetService: Verified saved time for prayer $i: "$savedTime" (expected: "$prayerTime")');
           
           if (savedTime != prayerTime) {

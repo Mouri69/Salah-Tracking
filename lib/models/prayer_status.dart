@@ -28,5 +28,16 @@ extension PrayerStatusExtension on PrayerStatus {
         return PrayerStatus.notPrayed;
     }
   }
+
+  String get label {
+    switch (this) {
+      case PrayerStatus.notPrayed:
+        return 'Not Prayed';
+      case PrayerStatus.prayedOnTime:
+        return 'On Time';
+      case PrayerStatus.prayedLate:
+        return 'Late';
+    }
+  }
 }
 

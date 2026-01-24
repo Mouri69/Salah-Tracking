@@ -168,6 +168,7 @@ class _TodayPrayersPageState extends State<TodayPrayersPage> {
                           Text(
                             dateFormat.format(provider.todayPrayers!.date),
                             style: Theme.of(context).textTheme.titleLarge,
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -176,6 +177,7 @@ class _TodayPrayersPageState extends State<TodayPrayersPage> {
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,
                                 ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
